@@ -1,0 +1,3 @@
+[submodule "repos/libhpxml/libhpxml"]
+	path = repos/libhpxml/libhpxml
+	url = https://github.com/rahra/libhpxml.git
