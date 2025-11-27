@@ -32,6 +32,50 @@ typedef struct NetBlocks
 }
 NetBlocks;
 
+/* ARIN netBlock type codes */
+enum ArinNetType
+{
+  ARIN_NETTYPE_UNKNOWN = 0,
+  ARIN_NETTYPE_DS, /* Direct allocation */
+  ARIN_NETTYPE_DA, /* Direct assignment */
+  ARIN_NETTYPE_A,  /* Reallocated */
+  ARIN_NETTYPE_S   /* Reassigned */
+};
+
+/* IPv4 inetnum status (RIPE-style) */
+enum InetnumStatus
+{
+  STATUS_ALLOCATED_PA = 0,
+  STATUS_SUBALLOCATED_PA,
+  STATUS_ASSIGNED_PA,
+  STATUS_ASSIGNED_PI
+};
+
+/* IPv6 inet6num status (RIPE-style) */
+enum Inet6numStatus
+{
+  STATUS6_ALLOCATED_BY_RIR = 0,
+  STATUS6_ALLOCATED_BY_LIR,
+  STATUS6_AGGREGATED_BY_LIR,
+  STATUS6_ASSIGNED,
+  STATUS6_ASSIGNED_PI,
+  STATUS6_ASSIGNED_ANYCAST
+};
+
+typedef struct IPAddrRange
+{
+  IPAddr start, end;
+  enum ArinNetType status;
+}
+IPAddrRange;
+
+typedef struct
+{
+  struct IPAddrRange ranges[MAX_NETBLOCKS];
+  unsigned count;
+}
+IPAddrSet;
+
 static enum HandleResult process_netblock(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
 {
   if (tag->type != HPX_OPEN)
@@ -98,36 +142,6 @@ static enum HandleResult process_netblock(hpx_ctrl_t *ctl, hpx_tag_t *tag, void 
   ++blocks->count;
   return HANDLE_RESULT_OK;
 }
-
-/* ARIN netBlock type codes */
-enum ArinNetType
-{
-  ARIN_NETTYPE_UNKNOWN = 0,
-  ARIN_NETTYPE_DS, /* Direct allocation */
-  ARIN_NETTYPE_DA, /* Direct assignment */
-  ARIN_NETTYPE_A,  /* Reallocated */
-  ARIN_NETTYPE_S   /* Reassigned */
-};
-
-/* IPv4 inetnum status (RIPE-style) */
-enum InetnumStatus
-{
-  STATUS_ALLOCATED_PA = 0,
-  STATUS_SUBALLOCATED_PA,
-  STATUS_ASSIGNED_PA,
-  STATUS_ASSIGNED_PI
-};
-
-/* IPv6 inet6num status (RIPE-style) */
-enum Inet6numStatus
-{
-  STATUS6_ALLOCATED_BY_RIR = 0,
-  STATUS6_ALLOCATED_BY_LIR,
-  STATUS6_AGGREGATED_BY_LIR,
-  STATUS6_ASSIGNED,
-  STATUS6_ASSIGNED_PI,
-  STATUS6_ASSIGNED_ANYCAST
-};
 
 #define TAG2(a,b) ((uint16_t)(((uint16_t)(uint8_t)(a) << 8) | (uint16_t)(uint8_t)(b)))
 
@@ -304,17 +318,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
   if (!orgHandle.len || (version != 4 && version != 6))
     return HANDLE_RESULT_OK;
 
-  struct
-  {
-    struct
-    {
-      IPAddr start, end;
-      enum ArinNetType status;
-    }
-    ranges[MAX_NETBLOCKS];
-    unsigned count;
-  }
-  ipAddrSet = {};
+  IPAddrSet ipAddrSet = {};
 
   IPAddr sAddr, eAddr;
 
@@ -346,7 +350,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
       bool found = false;
       for(int n = 0; n < ipAddrSet.count; ++n)
       {
-        auto range = &ipAddrSet.ranges[n];
+        IPAddrRange *range = &ipAddrSet.ranges[n];
         if (range->start.v4.s_addr == sAddr.v4.s_addr &&
             range->end  .v4.s_addr == eAddr.v4.s_addr)
         {
@@ -365,7 +369,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
       if (ipAddrSet.count == MAX_NETBLOCKS)
         break;
 
-      auto range = &ipAddrSet.ranges[ipAddrSet.count++];
+      IPAddrRange *range = &ipAddrSet.ranges[ipAddrSet.count++];
       range->start  = sAddr;
       range->end    = eAddr;
       range->status = parseArinNetType(&block->type);
@@ -383,7 +387,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
       bool found = false;
       for(int n = 0; n < ipAddrSet.count; ++n)
       {
-        auto range = &ipAddrSet.ranges[n];
+        IPAddrRange *range = &ipAddrSet.ranges[n];
         if (IN6_ARE_ADDR_EQUAL(&range->start, &sAddr.v6) &&
             IN6_ARE_ADDR_EQUAL(&range->end   ,&eAddr.v6))
         {
@@ -402,7 +406,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
       if (ipAddrSet.count == MAX_NETBLOCKS)
         break;
 
-      auto range = &ipAddrSet.ranges[ipAddrSet.count++];
+      IPAddrRange *range = &ipAddrSet.ranges[ipAddrSet.count++];
       range->start  = sAddr;
       range->end    = eAddr;
       range->status = parseArinNetType(&block->type);
@@ -412,7 +416,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
   // finally print the records out
   for(int i = 0; i < ipAddrSet.count; ++i)
   {
-    auto range = &ipAddrSet.ranges[i];
+    IPAddrRange *range = &ipAddrSet.ranges[i];
     char sStr[INET6_ADDRSTRLEN];
     char eStr[INET6_ADDRSTRLEN];
 
