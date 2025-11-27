@@ -125,3 +125,32 @@ uint8_t ipv6_to_cidr(const struct in6_addr *start, const struct in6_addr *end)
 
   return (uint8_t)prefix;
 }
+
+void sanatize_value(const bstring_t *bs, char *out, size_t out_sz)
+{
+  char       *p   = out;
+  const char *end = out + out_sz - 1;
+
+  for(int i = 0; i < bs->len; ++i)
+  {
+    // remove '#' characters from the name as it is read as a comment
+    if (bs->buf[i] == '#')
+      continue;
+
+    // replace non-ascii characters with a space
+    if (bs->buf[i] < 32 || bs->buf[i] > 126)
+    {
+      // don't insert multiple spaces
+      if (p != out && *(p-1) == ' ')
+        continue;
+
+      *p = ' ';
+    }
+    else
+      *p = bs->buf[i];
+
+    if (++p == end)
+      break;
+  }
+  *p = '\0';
+}

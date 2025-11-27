@@ -54,28 +54,8 @@ enum HandleResult process_org(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
   char orgId[128];
   arin_orgid_from_handle(orgId, sizeof(orgId), handle.buf, handle.len, 0);
 
-  char orgName[name.len + 1], *p = orgName;
-  for(int i = 0; i < name.len; ++i)
-  {
-    // remove '#' characters from the name as it is read as a comment
-    if (name.buf[i] == '#')
-      continue;
-
-    // replace non-ascii characters with a space
-    if (name.buf[i] < 32 || name.buf[i] > 126)
-    {
-      // don't insert multiple spaces
-      if (i > 0 && *(p-1) == ' ')
-        continue;
-
-      *p = ' ';
-    }
-    else
-      *p = name.buf[i];
-
-    ++p;
-  }
-  *p = '\0';
+  char orgName[name.len + 1];
+  sanatize_value(&name, orgName, sizeof(orgName));
 
   printf(
     "organisation: %s\n"    
