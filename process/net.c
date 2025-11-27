@@ -129,14 +129,6 @@ enum Inet6numStatus
   STATUS6_ASSIGNED_ANYCAST
 };
 
-enum InetnumStatus
-{
-  STATUS_ALLOCATED_PA,
-  STATUS_SUBALLOCATED_PA,
-  STATUS_ASSIGNED_PA,
-  STATUS_ASSIGNED_PI
-};
-
 #define TAG2(a,b) ((uint16_t)(((uint16_t)(uint8_t)(a) << 8) | (uint16_t)(uint8_t)(b)))
 
 static enum ArinNetType parseArinNetType(const bstring_t *str)
