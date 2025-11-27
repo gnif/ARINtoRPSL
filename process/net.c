@@ -449,8 +449,11 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
     char orgId[128];
     arin_orgid_from_handle(orgId, sizeof(orgId), orgHandle.buf, orgHandle.len, 0);
 
+    char netName[name.len+1];
+    sanatize_value(&name, netName, sizeof(netName));
+
     printf(
-      "netname:  %.*s\n"
+      "netname:  %s\n"
       "descr:    From ARIN Bulk WHOIS (net)\n"
       "country:  US\n"
       "status:   %s\n"
@@ -460,7 +463,7 @@ enum HandleResult process_net(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
       "mnt-by:   ARIN-MNT\n"
       "source:   ARIN\n"
       "\n",
-      name.len, name.buf,
+      netName,
       statusStr,
       orgId);
 
