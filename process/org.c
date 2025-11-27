@@ -69,10 +69,10 @@ enum HandleResult process_org(hpx_ctrl_t *ctl, hpx_tag_t *tag, void *param)
         continue;
 
       *p = ' ';
-      continue;
     }
+    else
+      *p = name.buf[i];
 
-    *p = name.buf[i];
     ++p;
   }
   *p = '\0';
